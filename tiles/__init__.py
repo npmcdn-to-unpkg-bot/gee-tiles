@@ -1,7 +1,8 @@
-from flask import Flask, Response, request
+from flask import Flask, Response, request, jsonify, json
 from flask.ext.cache import Cache
 import requests
 from diskcache import FanoutCache as DiskCache
+from datetime import datetime
 
 cache = Cache()
 
@@ -18,13 +19,15 @@ app.config.from_object("tiles.config")
 # initialize all of the extensions
 cache.init_app(app)
 
-disk = DiskCache('tile_cache', shards=app.config.get('TILE_CACHE_SHARDS'), size_limit=app.config.get('TILE_CACHE_SIZE_LIMIT'),
-                   eviction_policy=app.config.get('TILE_CACHE_EVICTION'))
+disk = DiskCache('tile_cache', shards=app.config.get('TILE_CACHE_SHARDS'),
+                 size_limit=app.config.get('TILE_CACHE_SIZE_LIMIT'),
+                 eviction_policy=app.config.get('TILE_CACHE_EVICTION'))
 
 # initialize google earth engine
 ee.Initialize(ServiceAccountCredentials._from_parsed_json_keyfile(
     app.config['GOOGLE_SERVICE_ACCOUNT'],
     scopes=app.config['GOOGLE_SERVICE_ACCOUNT_SCOPES']))
+
 
 def parse_request_args_values(key):
     """
@@ -61,7 +64,7 @@ def tile_proxy(z, x, y):
     if tile is None:
         req = requests.get(url)
         tile = req.content
-        disk.set(key, tile, expire=app.config.get('TILE_CACHE_EXPIRATION',0))
+        disk.set(key, tile, expire=app.config.get('TILE_CACHE_EXPIRATION', 0))
         content_type = req.headers['content-type']
     else:
         content_type = 'image/png'
@@ -69,3 +72,27 @@ def tile_proxy(z, x, y):
     response = Response(tile, content_type=content_type)
     response.cache_control.max_age = 0
     return response
+
+@cache.cached(timeout=3600*24)
+@app.route('/products')
+def products():
+    def to_feature(img):
+        return ee.Feature(img.geometry(), img.toDictionary())
+
+    collection = ee.ImageCollection('users/JustinPoehnelt/products').map(to_feature)
+    collection = ee.FeatureCollection(collection)
+
+    # handle dates, legend and palette
+    def deserialize(f):
+        for key in f['properties'].keys():
+            if 'time' in key:
+                f['properties'][key] = datetime.fromtimestamp(f['properties'][key] / 1000.0).isoformat()
+
+        f['properties']['legend'] = json.loads(f['properties'].get('legend', "[]"))
+        f['properties']['palette'] = f['properties'].get('palette', "").split(',')
+        return f
+
+    collection = collection.getInfo()
+    collection['features'] = [deserialize(f) for f in collection['features']]
+
+    return jsonify(collection)
