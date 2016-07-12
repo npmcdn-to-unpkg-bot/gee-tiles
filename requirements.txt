@@ -7,3 +7,4 @@ requests
 oauth2client==2.0.1
 earthengine-api
 diskcache
+redis
