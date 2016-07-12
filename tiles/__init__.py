@@ -21,13 +21,10 @@ cache.init_app(app)
 disk = DiskCache('tile_cache', shards=app.config.get('TILE_CACHE_SHARDS'), size_limit=app.config.get('TILE_CACHE_SIZE_LIMIT'),
                    eviction_policy=app.config.get('TILE_CACHE_EVICTION'))
 
-try:
-    # initialize google earth engine
-    ee.Initialize(ServiceAccountCredentials._from_parsed_json_keyfile(
-        app.config['GOOGLE_SERVICE_ACCOUNT'],
-        scopes=app.config['GOOGLE_SERVICE_ACCOUNT_SCOPES']))  # debugging sitemap
-except:
-    pass
+# initialize google earth engine
+ee.Initialize(ServiceAccountCredentials._from_parsed_json_keyfile(
+    app.config['GOOGLE_SERVICE_ACCOUNT'],
+    scopes=app.config['GOOGLE_SERVICE_ACCOUNT_SCOPES']))
 
 def parse_request_args_values(key):
     """
