@@ -115,7 +115,7 @@ def build_map(**kwargs):
         else:
             vis_params = get_vis_params(None, None, **kwargs)
 
-        image = ee.Image(collection.reduce(kwargs.get('reducer', ee.Reducer.mean())))
+        image = ee.Image(collection.reduce(kwargs.get('reducer', ee.Reducer.mode())))
 
     elif 'image' in kwargs:
         image = ee.Image(kwargs['image'])
