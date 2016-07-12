@@ -1,0 +1,9 @@
+cffi
+gunicorn
+Flask==0.10.1
+Flask-Cache
+Flask-Compress
+requests
+oauth2client==2.0.1
+earthengine-api
+diskcache

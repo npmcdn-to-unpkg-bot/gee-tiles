@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="https://npmcdn.com/leaflet@0.7.7/dist/leaflet.css" />
+    <script src="https://npmcdn.com/leaflet@0.7.7/dist/leaflet.js"></script>
+</head>
+<div id="map"></div>
+<style>
+    #map {
+        height: 500px;
+        width:100%;
+    }
+</style>
+<script>
+    var map = L.map('map').setView([39.5, -0.5], 5);
+
+// Set up the OSM layer
+L.tileLayer(
+        'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        {maxZoom: 18}).addTo(map);
+
+// map settings
+//var raster = L.tileLayer('http://{s}.tiles.croplands.org/africa/{z}/{x}/{y}/tile.png', { maxZoom: 18, subdomains: 'abc', opacity:0.75});
+var raster = L.tileLayer('http://127.0.0.1:3000/{z}/{x}/{y}/tile.png?id=Africa_250m_L2_y2014_v3&band=intensity&collection=users/JustinPoehnelt/products', { maxZoom: 18, opacity:0.85});
+
+
+// create leaflet map from a div
+// add tile layer
+raster.addTo(map);
+
+// set default view
+</script>
+<body>
+
+</body>
+</html>
