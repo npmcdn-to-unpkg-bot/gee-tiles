@@ -88,8 +88,8 @@ def products():
             if 'time' in key:
                 f['properties'][key] = datetime.fromtimestamp(f['properties'][key] / 1000.0).isoformat()
 
-        f['properties']['legend'] = json.loads(f['properties'].get('legend', "[]"))
-        f['properties']['palette'] = f['properties'].get('palette', "").split(',')
+        f['properties']['class_legend'] = json.loads(f['properties'].get('class_legend', "[]"))
+        f['properties']['class_palette'] = f['properties'].get('class_palette', "").split(',')
         return f
 
     collection = collection.getInfo()
