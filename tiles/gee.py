@@ -32,7 +32,7 @@ def get_map(**kwargs):
     map_id = cache.get(key)
     if map_id is None:
         map_id = build_map(**kwargs)
-        cache.set(key, map_id, timeout=60 * 60 * 12)
+        cache.set(key, map_id, timeout=3600)
 
     return map_id
 
@@ -54,17 +54,20 @@ def get_vis_params(img, col, **kwargs):
     elif 'band' in kwargs:
         band = kwargs['band']
         if band == 'class':
-            if col is not None:
-                properties = ee.Image(col.first()).toDictionary().getInfo()
-            elif img is not None:
-                properties = ee.Image(col.first()).toDictionary().getInfo()
+            try:
+                if col is not None:
+                    properties = ee.Image(col.first()).toDictionary().getInfo()
+                elif img is not None:
+                    properties = img.toDictionary().getInfo()
+                else:
+                    return vis_params
+            except ee.EEException:
+                raise BadRequest("No images found.")
             else:
-                return vis_params
-
-            # set vis from image
-            vis_params['palette'] = properties['palette']
-            vis_params['min'] = 0
-            vis_params['max'] = len(vis_params['palette']) - 1  # zero based
+                # set vis from image
+                vis_params['palette'] = properties['class_palette']
+                vis_params['min'] = 0
+                vis_params['max'] = len(vis_params['palette'].split(',')) - 1  # zero based
 
         elif band == 'cropland':
             vis_params['palette'] = '000000,00ff00'
@@ -104,7 +107,6 @@ def build_map(**kwargs):
     :param kwargs:
     :return: mapid object
     """
-
     if 'collection' in kwargs:
         collection = ee.ImageCollection(kwargs['collection'])
         collection = collection.select(kwargs.get('band', ['.*']))
