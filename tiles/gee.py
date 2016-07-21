@@ -15,6 +15,7 @@ def build_cache_key(use_hash=True, **kwargs):
     """
 
     j = json.dumps(kwargs, sort_keys=True)
+    print(j)
     if use_hash:
         h = hash(json.dumps(kwargs, sort_keys=True))
         h += sys.maxsize + 1
@@ -61,7 +62,8 @@ def get_vis_params(img, col, **kwargs):
                     properties = img.toDictionary().getInfo()
                 else:
                     return vis_params
-            except ee.EEException:
+            except ee.EEException as e:
+                print(e)
                 raise BadRequest("No images found.")
             else:
                 # set vis from image
@@ -76,12 +78,12 @@ def get_vis_params(img, col, **kwargs):
 
         elif band == 'water':
             vis_params['palette'] = '000000,0000ff,00ffff'
-            vis_params['min'] = 0
+            vis_params['min'] = 1
             vis_params['max'] = 2
 
         elif band == 'intensity':
             vis_params['palette'] = '000000,0000ff,00ff00,ff0000,ffff00'
-            vis_params['min'] = 0
+            vis_params['min'] = 1
             vis_params['max'] = 4
 
             # TODO crop type
@@ -107,6 +109,9 @@ def build_map(**kwargs):
     :param kwargs:
     :return: mapid object
     """
+
+    reducer = getattr(ee.Reducer, kwargs.get('reducer', 'mode'))()
+
     if 'collection' in kwargs:
         collection = ee.ImageCollection(kwargs['collection'])
         collection = collection.select(kwargs.get('band', ['.*']))
@@ -117,7 +122,7 @@ def build_map(**kwargs):
         else:
             vis_params = get_vis_params(None, None, **kwargs)
 
-        image = ee.Image(collection.reduce(kwargs.get('reducer', ee.Reducer.mode())))
+        image = ee.Image(collection.reduce(reducer))
 
     elif 'image' in kwargs:
         image = ee.Image(kwargs['image'])

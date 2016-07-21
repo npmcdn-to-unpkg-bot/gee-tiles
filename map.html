@@ -3,18 +3,263 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title></title>
-    <link rel="stylesheet" href="https://npmcdn.com/leaflet@0.7.7/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://npmcdn.com/leaflet@0.7.7/dist/leaflet.css"/>
     <script src="https://npmcdn.com/leaflet@0.7.7/dist/leaflet.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.5.1/lodash.min.js"></script>
 </head>
 <div id="map"></div>
 <style>
     #map {
         height: 500px;
-        width:100%;
+        width: 100%;
     }
 </style>
 <script>
-    var map = L.map('map').setView([39.5, -0.5], 5);
+
+function GEETileLayer(object) {
+    this.layerOptions = { maxZoom: 18, subdomains: 'abc', opacity: 0.75};
+    this.url = 'http://{s}.tiles.croplands.org/{z}/{x}/{y}/tile.png';
+    this.band = 'class';
+    this.visible = true;
+
+
+    _.extend(this, object);
+
+    this._index = this.images.length - 1;
+    this.draw();
+}
+
+GEETileLayer.prototype.getFullUrl = function () {
+
+    var parameters = _.map({
+        image: this.images[this._index].id,
+        band: this.band
+    }, function (v, k) {
+        return [k, v].join("=")
+    }).join("&");
+
+    return this.url + "?" + parameters;
+};
+
+GEETileLayer.prototype.draw = function () {
+    var fullUrl = this.getFullUrl();
+     leafletData.getMap().then(function (map) {
+            map.eachLayer(function (layer) {
+                if (layer.url === currentLayer._url && layer.options.layers === currentWMSLayer) {
+                    var newParams = _.extend(layer.options, currentLayer.layerOptions);
+                    layer.setParams(newParams);
+                }
+            });
+        });
+};
+
+GEETileLayer.prototype.previous = function () {
+    this.index--;
+    this.draw()
+};
+
+GEETileLayer.prototype.next = function () {
+    this.index++;
+};
+
+GEETileLayer.prototype.play = function () {
+};
+
+var map = L.map('map').setView([39.5, -0.5], 5);
+/**
+ * id: 'australia_30m_v2016-6-1_y2014',
+ name: 'Australia GCE 30m Cropland Extent Product 2014',
+ type: 'wms',
+ url: 'https://wms.croplands.org/geoserver/Products/wms',
+ visible: true,
+ layerOptions: {
+                bounds: L.latLngBounds(L.latLng(-9.83464522447101, 110.000125), L.latLng(-45.00754522447101, 158.961625)),
+                layers: 'Products:australia_30m_v2016-6-1_y2014',
+                format: 'image/png',
+                transparent: true,
+                minZoom: 0,
+                maxNativeZoom: 17,
+                opacity: 1
+            },
+ legend: [
+ {label: 'Croplands', color: '#FFFF00'},
+ {label: 'Pasture', color: '#66FFFF'}
+ ]
+ */
+var africa = new GEETileLayer({
+    "attribution": "",
+    "class_legend": [
+        "",
+        "Irrigated, SC, season 2",
+        "Irrigated, SC, season 1",
+        "Irrigated, DC",
+        "Irrigated, Continuous",
+        "Rainfed, SC, season 2",
+        "Rainfed, SC, season 1",
+        "Rainfed, DC",
+        "Rainfed, Continuous",
+        "Fallow-lands",
+        "Not Cropland"
+    ],
+    "class_palette": [
+        "ffffff",
+        "e41a1c",
+        "8dd3c7",
+        "377eb8",
+        "4daf4a",
+        "984ea3",
+        "bebada",
+        "ff7f00",
+        "ffff33",
+        "e2e2e2",
+        "000000"
+    ],
+    "geometry": {
+        "coordinates": [
+            [
+                [
+                    -13.776371813992657,
+                    -35.11028375051883
+                ],
+                [
+                    -6.247778660378854,
+                    -35.110283750518825
+                ],
+                [
+                    8.182024884045843,
+                    -35.110283750518825
+                ],
+                [
+                    18.220149088865593,
+                    -35.11028375051882
+                ],
+                [
+                    33.9047181588946,
+                    -35.11028375051882
+                ],
+                [
+                    43.315459600910785,
+                    -35.11028375051883
+                ],
+                [
+                    55.86567788896676,
+                    -35.11027712118886
+                ],
+                [
+                    55.86575835084629,
+                    37.51940560947665
+                ],
+                [
+                    39.551163024104014,
+                    37.519412630189784
+                ],
+                [
+                    27.003507768080986,
+                    37.519412630189784
+                ],
+                [
+                    16.3380008004618,
+                    37.519412630189784
+                ],
+                [
+                    5.045111070040808,
+                    37.519412630189784
+                ],
+                [
+                    -2.483482083571122,
+                    37.51941263018979
+                ],
+                [
+                    -13.776371813993533,
+                    37.51941263018979
+                ],
+                [
+                    -24.44452227552502,
+                    37.51940560947665
+                ],
+                [
+                    -24.4444418136455,
+                    -35.110277121188844
+                ],
+                [
+                    -13.776371813992657,
+                    -35.11028375051883
+                ]
+            ]
+        ],
+        "geodesic": true,
+        "type": "Polygon"
+    },
+    "id": "Africa_250m_L2_v20160601",
+    "images": [
+        {
+            "id": "Africa_250m_L2_y2003_v20160601",
+            "time_end": "2003-12-30T17:00:00",
+            "time_start": "2002-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2004_v20160601",
+            "time_end": "2004-12-30T17:00:00",
+            "time_start": "2003-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2005_v20160601",
+            "time_end": "2005-12-30T17:00:00",
+            "time_start": "2004-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2006_v20160601",
+            "time_end": "2006-12-30T17:00:00",
+            "time_start": "2005-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2007_v20160601",
+            "time_end": "2007-12-30T17:00:00",
+            "time_start": "2006-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2008_v20160601",
+            "time_end": "2008-12-30T17:00:00",
+            "time_start": "2007-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2009_v20160601",
+            "time_end": "2009-12-30T17:00:00",
+            "time_start": "2008-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2010_v20160601",
+            "time_end": "2010-12-30T17:00:00",
+            "time_start": "2009-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2011_v20160601",
+            "time_end": "2011-12-30T17:00:00",
+            "time_start": "2010-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2012_v20160601",
+            "time_end": "2012-12-30T17:00:00",
+            "time_start": "2011-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2013_v20160601",
+            "time_end": "2013-12-30T17:00:00",
+            "time_start": "2012-12-31T17:00:00"
+        },
+        {
+            "id": "Africa_250m_L2_y2014_v20160601",
+            "time_end": "2014-12-30T17:00:00",
+            "time_start": "2013-12-31T17:00:00"
+        }
+    ],
+    "index": 20030101.0,
+    "level": 2.0,
+    "scale": 250.0,
+    "scope": "continent",
+    "scope_name": "Africa",
+    "version": "20160601"
+});
 
 // Set up the OSM layer
 L.tileLayer(
@@ -23,7 +268,7 @@ L.tileLayer(
 
 // map settings
 //var raster = L.tileLayer('http://{s}.tiles.croplands.org/africa/{z}/{x}/{y}/tile.png', { maxZoom: 18, subdomains: 'abc', opacity:0.75});
-var raster = L.tileLayer('http://127.0.0.1:3000/{z}/{x}/{y}/tile.png?id=Africa_250m_L2_y2014_v3&band=intensity&collection=users/JustinPoehnelt/products', { maxZoom: 18, opacity:0.85});
+var raster = L.tileLayer('http://0.0.0.0:8000/{z}/{x}/{y}/tile.png?band=class&image=users/JustinPoehnelt/products/Africa_250m_L2_y2003_v20160601', { maxZoom: 18, opacity: 0.85, subdomains: 'abc'});
 
 
 // create leaflet map from a div

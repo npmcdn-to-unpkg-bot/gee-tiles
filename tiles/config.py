@@ -7,10 +7,10 @@ GOOGLE_SERVICE_ACCOUNT = json.loads(
 GOOGLE_SERVICE_ACCOUNT_SCOPES = ['https://www.googleapis.com/auth/fusiontables',
                                  'https://www.googleapis.com/auth/earthengine']
 
-CACHE_TYPE = 'redis'
+CACHE_TYPE = 'simple'
 CACHE_REDIS_URL = 'redis://localhost:6379'
 
 TILE_CACHE_SIZE_LIMIT = 2 ** 30 * 10  # 10GB
 TILE_CACHE_EVICTION = 'least-recently-used'
-TILE_CACHE_EXPIRATION = 3600 * 24 * 10  # 10 days
+TILE_CACHE_EXPIRATION = 3600 * 24 * 100 # 100 days
 TILE_CACHE_SHARDS = 16

@@ -70,23 +70,27 @@ def tile_proxy(z, x, y):
         content_type = 'image/png'
 
     response = Response(tile, content_type=content_type)
-    response.cache_control.max_age = 0
+    response.cache_control.max_age = 300
     return response
 
-@cache.cached(timeout=3600*24)
-@app.route('/products')
-def products():
+
+@cache.cached(timeout=3600 * 24)
+@app.route('/collection')
+def collection_metadata():
+    collection_id = request.args.get('id', 'users/JustinPoehnelt/products')
+
     def to_feature(img):
         return ee.Feature(img.geometry(), img.toDictionary())
 
-    collection = ee.ImageCollection('users/JustinPoehnelt/products').map(to_feature)
+    collection = ee.ImageCollection(collection_id).map(to_feature)
     collection = ee.FeatureCollection(collection)
 
     # handle dates, legend and palette
     def deserialize(f):
         for key in f['properties'].keys():
             if 'time' in key:
-                f['properties'][key] = datetime.fromtimestamp(f['properties'][key] / 1000.0).isoformat()
+                f['properties'][key] = datetime.fromtimestamp(
+                    f['properties'][key] / 1000.0).isoformat()
 
         f['properties']['class_legend'] = json.loads(f['properties'].get('class_legend', "[]"))
         f['properties']['class_palette'] = f['properties'].get('class_palette', "").split(',')
@@ -96,3 +100,49 @@ def products():
     collection['features'] = [deserialize(f) for f in collection['features']]
 
     return jsonify(collection)
+
+
+# @cache.cached(timeout=3600*24)
+@app.route('/products')
+def products_metadata():
+    collection_id = request.args.get('id', 'users/JustinPoehnelt/products')
+
+    def to_feature(img):
+        return ee.Feature(img.geometry(), img.toDictionary())
+
+    collection = ee.ImageCollection(collection_id)
+    collection = collection.sort('time_start')
+    collection = collection.map(to_feature)
+
+    collection = ee.FeatureCollection(collection)
+    collection = collection.getInfo()
+
+    # handle dates, legend and palette
+    def deserialize(f):
+        for key in f['properties'].keys():
+            if 'time' in key:
+                f['properties'][key] = datetime.fromtimestamp(
+                    f['properties'][key] / 1000.0).isoformat()
+
+        f['properties']['class_legend'] = json.loads(f['properties'].get('class_legend', "[]"))
+        f['properties']['class_palette'] = f['properties'].get('class_palette', "").split(',')
+        return f
+
+    products = {}
+    for feature in collection['features']:
+        feature = deserialize(feature)
+
+        if feature['properties']['id'] not in products:
+            products[feature['properties']['id']] = {k: v for k, v in feature['properties'].items()
+                                                     if 'time' not in k}
+            products[feature['properties']['id']]['geometry'] = feature['geometry']
+            products[feature['properties']['id']]['images'] = []
+
+        products[feature['properties']['id']]['images'].append({
+            'id': feature['id'],
+            'time_start': feature['properties']['time_start'],
+            'time_end': feature['properties']['time_end']
+        })
+
+    return jsonify(products)
+
