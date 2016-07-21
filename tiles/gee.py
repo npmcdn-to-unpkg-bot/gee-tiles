@@ -3,6 +3,8 @@ import json
 from tiles import cache
 from werkzeug.exceptions import BadRequest
 import sys
+import time
+import random
 
 BASE_URL = 'https://earthengine.googleapis.com/'
 
@@ -26,14 +28,33 @@ def build_cache_key(use_hash=True, **kwargs):
 def get_map(**kwargs):
     """
     Gets map from cache if it exists or calls method to build it.
+
+    Cache expiration has a fuzzy expiration to prevent future build
+    calls occurring at the same time.
+
+    If exception raised by ee, such as 429, try again with linear delay
     :param kwargs:
     :return:
     """
     key = build_cache_key(**kwargs)
     map_id = cache.get(key)
-    if map_id is None:
-        map_id = build_map(**kwargs)
-        cache.set(key, map_id, timeout=3600)
+
+    tries = 0
+    while map_id is None:
+        try:
+            map_id = build_map(**kwargs)
+        except ee.EEException as e:
+            # check tries, increment and sleep
+            if tries > 5:
+                raise e
+            tries += 1
+            time.sleep(tries * random.random())
+
+            # check if other got the map during delay
+            map_id = cache.get(key)
+        else:
+            # set key
+            cache.set(key, map_id, timeout=3600 - int(random.randrange(0, 300)))
 
     return map_id
 
@@ -63,7 +84,8 @@ def get_vis_params(img, col, **kwargs):
                 else:
                     return vis_params
             except ee.EEException as e:
-                print(e)
+                if '429' in str(e):
+                    raise e
                 raise BadRequest("No images found.")
             else:
                 # set vis from image
@@ -130,7 +152,7 @@ def build_map(**kwargs):
         vis_params = get_vis_params(image, None, **kwargs)
 
     else:
-        raise BadRequest("No image or collection specified")
+        raise ee.EEException("No image or collection specified")
 
     mapid = image.getMapId(vis_params=vis_params)
 
