@@ -144,6 +144,9 @@ def build_map(**kwargs):
         else:
             vis_params = get_vis_params(None, None, **kwargs)
 
+        if 'year' in kwargs:
+            collection = collection.filterMetadata('year', 'equals', int(kwargs['year']))
+
         image = ee.Image(collection.reduce(reducer))
 
     elif 'image' in kwargs:
